@@ -35,11 +35,14 @@ func GetMessager() Messager {
 func (m *messager) SendMessage(messages string, ctx context.Context) error {
 
 	select {
+
 	case <-ctx.Done():
+
 		e := "task is cancelled!"
 		log.Println(e)
 		return errors.New(e)
 	default:
+
 		token := GetToken()
 		senderUrl := Bot.Protocol + Bot.Host + Bot.SendMsgUri + "?access_token=" + token
 		message := Message{Touser: Bot.UserId, Msgtype: "text", Agentid: Bot.Agent}
@@ -48,6 +51,7 @@ func (m *messager) SendMessage(messages string, ctx context.Context) error {
 		if err != nil {
 			log.Println("parse message failed")
 			log.Println(err)
+			return err
 		}
 
 		res := httputil.Request(http.MethodPost, senderUrl, bytes.NewBuffer([]byte(json)), nil)
