@@ -7,23 +7,41 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"net/url"
 
 	"github.com/hauntedness/httputil"
 )
 
 type Messager interface {
 	SendMessage(string, context.Context) error
+	SendNewsMessage(articles []Article, ctx context.Context) error
 }
 
 type messager struct{}
 
 type Message struct {
 	Touser  string `json:"touser"`
+	Toparty string `json:"toparty,omitempty"`
+	Totag   string `json:"totag,omitempty"`
 	Msgtype string `json:"msgtype"`
 	Agentid string `json:"agentid"`
+	News    News   `json:"news,omitempty"`
 	Text    struct {
 		Content string `json:"content"`
-	} `json:"text"`
+	} `json:"text,omitempty"`
+}
+
+type News struct {
+	Articles []Article `json:"articles"`
+}
+
+type Article struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	URL         string `json:"url"`
+	Picurl      string `json:"picurl"`
+	Appid       string `json:"appid"`
+	Pagepath    string `json:"pagepath"`
 }
 
 var m Messager = &messager{}
@@ -33,20 +51,70 @@ func GetMessager() Messager {
 }
 
 func (m *messager) SendMessage(messages string, ctx context.Context) error {
-
 	select {
-
 	case <-ctx.Done():
-
 		e := "task is cancelled!"
 		log.Println(e)
 		return errors.New(e)
 	default:
-
 		token := GetToken()
-		senderUrl := Bot.Protocol + Bot.Host + Bot.SendMsgUri + "?access_token=" + token
+		query := url.Values{}
+		query.Add("access_token", token)
+		u := url.URL{
+			Scheme:     Bot.Protocol,
+			User:       &url.Userinfo{},
+			Host:       Bot.Host,
+			Path:       Bot.SendMsgUri,
+			ForceQuery: true,
+			RawQuery:   query.Encode(),
+		}
+		senderUrl := u.String()
 		message := Message{Touser: Bot.UserId, Msgtype: "text", Agentid: Bot.Agent}
 		message.Text.Content = messages
+		json, err := json.Marshal(message)
+		if err != nil {
+			log.Println("parse message failed")
+			log.Println(err)
+			return err
+		}
+
+		res := httputil.Request(http.MethodPost, senderUrl, bytes.NewBuffer([]byte(json)), nil)
+		err = IsAccessTokenError(res)
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+		return nil
+	}
+}
+
+func (m *messager) SendNewsMessage(articles []Article, ctx context.Context) error {
+	select {
+	case <-ctx.Done():
+		e := "task is cancelled!"
+		log.Println(e)
+		return errors.New(e)
+	default:
+		token := GetToken()
+		query := url.Values{}
+		query.Add("access_token", token)
+		u := url.URL{
+			Scheme:     Bot.Protocol,
+			User:       &url.Userinfo{},
+			Host:       Bot.Host,
+			Path:       Bot.SendMsgUri,
+			ForceQuery: true,
+			RawQuery:   query.Encode(),
+		}
+		senderUrl := u.String()
+		message := Message{
+			Touser:  Bot.UserId,
+			Msgtype: "news",
+			Agentid: Bot.Agent,
+			News: News{
+				Articles: articles,
+			},
+		}
 		json, err := json.Marshal(message)
 		if err != nil {
 			log.Println("parse message failed")

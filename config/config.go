@@ -11,15 +11,19 @@ type config struct {
 }
 
 func GetWechatConfig() *config {
+	var err error
 	path := os.Getenv("WECHAT_CONFIG_PATH")
 	if path == "" {
-		dir, _ := os.UserConfigDir()
+		dir, err := os.UserConfigDir()
+		if err != nil {
+			panic(err)
+		}
 		path = dir + `\wechat\.config\wechat.toml`
 	}
 	conf := config{}
-	_, err := toml.DecodeFile(path, &conf)
+	_, err = toml.DecodeFile(path, &conf)
 	if err != nil {
-		return nil
+		panic(err)
 	}
 	return &conf
 }

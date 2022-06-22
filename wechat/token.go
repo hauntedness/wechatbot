@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"net/url"
 	"regexp"
 	"sync"
 	"time"
@@ -42,8 +43,19 @@ func IsAccessTokenError(res []byte) error {
 }
 
 func updateToken(token *Token) {
-	url := Bot.Protocol + Bot.Host + Bot.GetTokenUri
-	data := httputil.Request(http.MethodGet, url, nil, nil)
+	value := url.Values{}
+	value.Add("corpid", Bot.CorpId)
+	value.Add("corpsecret", Bot.Secret)
+	u := url.URL{
+		Scheme:     Bot.Protocol,
+		Host:       Bot.Host,
+		Path:       Bot.GetTokenUri,
+		ForceQuery: true,
+		RawQuery:   value.Encode(),
+	}
+	url_ := u.String()
+
+	data := httputil.Request(http.MethodGet, url_, nil, nil)
 	err := json.Unmarshal(data, token)
 	if err != nil {
 		log.Println(err)
