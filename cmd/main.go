@@ -16,6 +16,6 @@ func main() {
 			Picurl:      "http://res.mail.qq.com/node/ww/wwopenmng/images/independent/doc/test_pic_msg1.png",
 		},
 	}
-	wechat.SendNewsMessage(articles, context.TODO())
+	wechat.Send("dafsf", articles, context.TODO())
 
 }

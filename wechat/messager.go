@@ -13,8 +13,7 @@ import (
 )
 
 type Messager interface {
-	SendMessage(string, context.Context) error
-	SendNewsMessage(articles []Article, ctx context.Context) error
+	Send(string, []Article, context.Context) error
 }
 
 type messager struct{}
@@ -50,45 +49,7 @@ func GetMessager() Messager {
 	return m
 }
 
-func (m *messager) SendMessage(messages string, ctx context.Context) error {
-	select {
-	case <-ctx.Done():
-		e := "task is cancelled!"
-		log.Println(e)
-		return errors.New(e)
-	default:
-		token := GetToken()
-		query := url.Values{}
-		query.Add("access_token", token)
-		u := url.URL{
-			Scheme:     Bot.Protocol,
-			User:       &url.Userinfo{},
-			Host:       Bot.Host,
-			Path:       Bot.SendMsgUri,
-			ForceQuery: true,
-			RawQuery:   query.Encode(),
-		}
-		senderUrl := u.String()
-		message := Message{Touser: Bot.UserId, Msgtype: "text", Agentid: Bot.Agent}
-		message.Text.Content = messages
-		json, err := json.Marshal(message)
-		if err != nil {
-			log.Println("parse message failed")
-			log.Println(err)
-			return err
-		}
-
-		res := httputil.Request(http.MethodPost, senderUrl, bytes.NewBuffer([]byte(json)), nil)
-		err = IsAccessTokenError(res)
-		if err != nil {
-			log.Println(err)
-			return err
-		}
-		return nil
-	}
-}
-
-func (m *messager) SendNewsMessage(articles []Article, ctx context.Context) error {
+func (m *messager) Send(messages string, articles []Article, ctx context.Context) error {
 	select {
 	case <-ctx.Done():
 		e := "task is cancelled!"
@@ -109,11 +70,18 @@ func (m *messager) SendNewsMessage(articles []Article, ctx context.Context) erro
 		senderUrl := u.String()
 		message := Message{
 			Touser:  Bot.UserId,
-			Msgtype: "news",
 			Agentid: Bot.Agent,
-			News: News{
+		}
+		if len(articles) != 0 {
+			message.Msgtype = "news"
+			message.News = News{
 				Articles: articles,
-			},
+			}
+		} else if messages != "" {
+			message.Text.Content = messages
+			message.Msgtype = "text"
+		} else {
+			panic("can not send empty message")
 		}
 		json, err := json.Marshal(message)
 		if err != nil {
