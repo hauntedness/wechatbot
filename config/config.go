@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"path"
 
 	"github.com/BurntSushi/toml"
 )
@@ -12,16 +13,16 @@ type config struct {
 
 func GetWechatConfig() *config {
 	var err error
-	path := os.Getenv("WECHAT_CONFIG_PATH")
-	if path == "" {
+	path_ := os.Getenv("WECHAT_CONFIG_PATH")
+	if path_ == "" {
 		dir, err := os.UserConfigDir()
 		if err != nil {
 			panic(err)
 		}
-		path = dir + `\wechat\.config\wechat.toml`
+		path_ = path.Join(dir, "wechat", ".config", "wechat.toml")
 	}
 	conf := config{}
-	_, err = toml.DecodeFile(path, &conf)
+	_, err = toml.DecodeFile(path_, &conf)
 	if err != nil {
 		panic(err)
 	}
