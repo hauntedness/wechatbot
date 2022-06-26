@@ -15,6 +15,24 @@ func main() {
 			URL:         "URL",
 			Picurl:      "http://res.mail.qq.com/node/ww/wwopenmng/images/independent/doc/test_pic_msg1.png",
 		},
+		{
+			Title:       "中秋节礼品领取2",
+			Description: "今年中秋节公司有豪礼相送",
+			URL:         "URL",
+			Picurl:      "http://res.mail.qq.com/node/ww/wwopenmng/images/independent/doc/test_pic_msg1.png",
+		},
+		{
+			Title:       "中秋节礼品领取3",
+			Description: "今年中秋节公司有豪礼相送",
+			URL:         "URL",
+			Picurl:      "http://res.mail.qq.com/node/ww/wwopenmng/images/independent/doc/test_pic_msg1.png",
+		},
+		{
+			Title:       "中秋节礼品领取4",
+			Description: "今年中秋节公司有豪礼相送",
+			URL:         "URL",
+			Picurl:      "http://res.mail.qq.com/node/ww/wwopenmng/images/independent/doc/test_pic_msg1.png",
+		},
 	}
 	wechat.Send("dafsf", articles, context.TODO())
 

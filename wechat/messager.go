@@ -8,15 +8,20 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/hauntedness/httputil"
+	"github.com/hauntedness/wechatbot/config"
 )
 
 type Messager interface {
 	Send(string, []Article, context.Context) error
 }
 
-type messager struct{}
+type messager struct {
+	config *config.BotConfig
+	token  *Token
+}
 
 type Message struct {
 	Touser  string `json:"touser"`
@@ -43,10 +48,45 @@ type Article struct {
 	Pagepath    string `json:"pagepath"`
 }
 
-var m Messager = &messager{}
+func NewMessager(conf *config.BotConfig) Messager {
+	return &messager{config: conf}
+}
+
+var m Messager = &messager{config: config.GetBot(), token: &Token{}}
 
 func GetMessager() Messager {
 	return m
+}
+
+func (m *messager) GetToken() string {
+	m.refreshToken()
+	return m.token.AccessToken
+}
+
+func (m *messager) refreshToken() {
+
+	if m.token.willExpireAt.After(time.Now()) {
+		return
+	}
+	value := url.Values{}
+	value.Add("corpid", m.config.CorpId)
+	value.Add("corpsecret", m.config.Secret)
+	u := url.URL{
+		Scheme:     m.config.Protocol,
+		Host:       m.config.Host,
+		Path:       m.config.GetTokenUri,
+		ForceQuery: true,
+		RawQuery:   value.Encode(),
+	}
+	url_ := u.String()
+
+	data := httputil.Request(http.MethodGet, url_, nil, nil)
+	err := json.Unmarshal(data, m.token)
+	if err != nil {
+		log.Println(err)
+		panic("getToken failed")
+	}
+	m.token.willExpireAt = time.Now().Add(time.Duration(m.token.ExpiresIn - 10))
 }
 
 func (m *messager) Send(messages string, articles []Article, ctx context.Context) error {
@@ -56,21 +96,21 @@ func (m *messager) Send(messages string, articles []Article, ctx context.Context
 		log.Println(e)
 		return errors.New(e)
 	default:
-		token := GetToken()
+		token := m.GetToken()
 		query := url.Values{}
 		query.Add("access_token", token)
 		u := url.URL{
-			Scheme:     Bot.Protocol,
+			Scheme:     m.config.Protocol,
 			User:       &url.Userinfo{},
-			Host:       Bot.Host,
-			Path:       Bot.SendMsgUri,
+			Host:       m.config.Host,
+			Path:       m.config.SendMsgUri,
 			ForceQuery: true,
 			RawQuery:   query.Encode(),
 		}
 		senderUrl := u.String()
 		message := Message{
-			Touser:  Bot.UserId,
-			Agentid: Bot.Agent,
+			Touser:  m.config.UserId,
+			Agentid: m.config.Agent,
 		}
 		if len(articles) != 0 {
 			message.Msgtype = "news"

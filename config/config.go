@@ -43,7 +43,7 @@ type BotConfig struct {
 	EncodingAESKey string
 }
 
-func GetBot() BotConfig {
+func GetBot() *BotConfig {
 	c := GetWechatConfig()
-	return c.BotConf
+	return &c.BotConf
 }
