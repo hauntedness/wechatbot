@@ -49,7 +49,7 @@ type Article struct {
 }
 
 func NewMessager(conf *config.BotConfig) Messager {
-	return &messager{config: conf}
+	return &messager{config: conf, token: &Token{}}
 }
 
 var m Messager = &messager{config: config.GetBot(), token: &Token{}}
