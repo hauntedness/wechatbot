@@ -2,7 +2,7 @@ package config
 
 import (
 	"os"
-	"path"
+	"path/filepath"
 
 	"github.com/BurntSushi/toml"
 )
@@ -19,7 +19,7 @@ func GetWechatConfig() *config {
 		if err != nil {
 			panic(err)
 		}
-		path_ = path.Join(dir, "wechat", ".config", "wechat.toml")
+		path_ = filepath.Join(dir, "wechat", ".config", "wechat.toml")
 	}
 	conf := config{}
 	_, err = toml.DecodeFile(path_, &conf)
