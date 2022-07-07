@@ -1,7 +1,6 @@
 package wechat
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -64,10 +63,7 @@ func (m *messager) GetToken() string {
 }
 
 func (m *messager) refreshToken() {
-
-	if m.token.willExpireAt.After(time.Now()) {
-		return
-	}
+	if m.token.willExpireAt.After(time.Now()) { return }
 	value := url.Values{}
 	value.Add("corpid", m.config.CorpId)
 	value.Add("corpsecret", m.config.Secret)
@@ -130,7 +126,7 @@ func (m *messager) Send(messages string, articles []Article, ctx context.Context
 			return err
 		}
 
-		res := httputil.Request(http.MethodPost, senderUrl, bytes.NewBuffer([]byte(json)), nil)
+		res := httputil.Request(http.MethodPost, senderUrl, []byte(json), nil)
 		err = IsAccessTokenError(res)
 		if err != nil {
 			log.Println(err)
