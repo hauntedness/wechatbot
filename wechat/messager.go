@@ -1,11 +1,10 @@
 package wechat
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
-	"net/http"
 	"net/url"
 	"time"
 
@@ -63,7 +62,9 @@ func (m *messager) GetToken() string {
 }
 
 func (m *messager) refreshToken() {
-	if m.token.willExpireAt.After(time.Now()) { return }
+	if m.token.willExpireAt.After(time.Now()) {
+		return
+	}
 	value := url.Values{}
 	value.Add("corpid", m.config.CorpId)
 	value.Add("corpsecret", m.config.Secret)
@@ -76,11 +77,13 @@ func (m *messager) refreshToken() {
 	}
 	url_ := u.String()
 
-	data := httputil.Request(http.MethodGet, url_, nil, nil)
-	err := json.Unmarshal(data, m.token)
+	data, err := httputil.Get(url_, nil)
 	if err != nil {
-		log.Println(err)
-		panic("getToken failed")
+		return
+	}
+	err = json.Unmarshal(data, m.token)
+	if err != nil {
+		return
 	}
 	m.token.willExpireAt = time.Now().Add(time.Duration(m.token.ExpiresIn - 10))
 }
@@ -88,9 +91,7 @@ func (m *messager) refreshToken() {
 func (m *messager) Send(messages string, articles []Article, ctx context.Context) error {
 	select {
 	case <-ctx.Done():
-		e := "task is cancelled!"
-		log.Println(e)
-		return errors.New(e)
+		return errors.New("task is cancelled!")
 	default:
 		token := m.GetToken()
 		query := url.Values{}
@@ -121,15 +122,15 @@ func (m *messager) Send(messages string, articles []Article, ctx context.Context
 		}
 		json, err := json.Marshal(message)
 		if err != nil {
-			log.Println("parse message failed")
-			log.Println(err)
 			return err
 		}
 
-		res := httputil.Request(http.MethodPost, senderUrl, []byte(json), nil)
+		res, err := httputil.Post(senderUrl, bytes.NewReader(json), nil)
+		if err != nil {
+			return err
+		}
 		err = IsAccessTokenError(res)
 		if err != nil {
-			log.Println(err)
 			return err
 		}
 		return nil
