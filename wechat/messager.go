@@ -105,7 +105,6 @@ func (m *messager) Send(messages string, articles []Article, ctx context.Context
 		query.Add("access_token", token)
 		u := url.URL{
 			Scheme:     m.config.Protocol,
-			User:       &url.Userinfo{},
 			Host:       m.config.Host,
 			Path:       m.config.SendMsgUri,
 			ForceQuery: true,
