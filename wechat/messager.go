@@ -1,7 +1,6 @@
 package wechat
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -127,16 +126,12 @@ func (m *messager) Send(messages string, articles []Article, ctx context.Context
 		} else {
 			return errors.New("can not send empty message")
 		}
-		json, err := json.Marshal(message)
-		if err != nil {
-			return err
-		}
 		var h httputil.H
 		if m.config.UserAgent != "" {
 			h = make(httputil.H)
 			h["User-Agent"] = m.config.UserAgent
 		}
-		res, err := httputil.PostJson[MessageSendResponse](senderUrl, bytes.NewReader(json), h)
+		res, err := httputil.PostJson[MessageSendResponse](senderUrl, message, h)
 		if err != nil {
 			return err
 		}
