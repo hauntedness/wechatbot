@@ -50,20 +50,23 @@ func NewMessager(conf *config.BotConfig) Messager {
 	return &messager{config: conf, token: &Token{}}
 }
 
-var m Messager = &messager{config: config.GetBot(), token: &Token{}}
+var m = &messager{token: &Token{}}
 
 func GetMessager() Messager {
 	return m
 }
 
-func (m *messager) GetToken() string {
-	m.refreshToken()
-	return m.token.AccessToken
+func (m *messager) GetToken() (string, error) {
+	err := m.refreshToken()
+	if err != nil {
+		return "", err
+	}
+	return m.token.AccessToken, nil
 }
 
-func (m *messager) refreshToken() {
+func (m *messager) refreshToken() error {
 	if m.token.willExpireAt.After(time.Now()) {
-		return
+		return nil
 	}
 	value := url.Values{}
 	value.Add("corpid", m.config.CorpId)
@@ -79,13 +82,14 @@ func (m *messager) refreshToken() {
 
 	data, err := httputil.Get(url_, nil)
 	if err != nil {
-		return
+		return err
 	}
 	err = json.Unmarshal(data, m.token)
 	if err != nil {
-		return
+		return err
 	}
 	m.token.willExpireAt = time.Now().Add(time.Duration(m.token.ExpiresIn - 10))
+	return nil
 }
 
 func (m *messager) Send(messages string, articles []Article, ctx context.Context) error {
@@ -93,7 +97,10 @@ func (m *messager) Send(messages string, articles []Article, ctx context.Context
 	case <-ctx.Done():
 		return errors.New("task is cancelled!")
 	default:
-		token := m.GetToken()
+		token, err := m.GetToken()
+		if err != nil {
+			return err
+		}
 		query := url.Values{}
 		query.Add("access_token", token)
 		u := url.URL{

@@ -11,22 +11,22 @@ type config struct {
 	BotConf BotConfig
 }
 
-func GetWechatConfig() *config {
+func GetWechatConfig() (*config, error) {
 	var err error
 	path_ := os.Getenv("WECHAT_CONFIG_PATH")
 	if path_ == "" {
 		dir, err := os.UserConfigDir()
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		path_ = filepath.Join(dir, "wechat", ".config", "wechat.toml")
 	}
 	conf := config{}
 	_, err = toml.DecodeFile(path_, &conf)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return &conf
+	return &conf, nil
 }
 
 type BotConfig struct {
@@ -44,7 +44,10 @@ type BotConfig struct {
 	EncodingAESKey string
 }
 
-func GetBot() *BotConfig {
-	c := GetWechatConfig()
-	return &c.BotConf
+func GetBot() (*BotConfig, error) {
+	c, err := GetWechatConfig()
+	if err != nil {
+		return nil, err
+	}
+	return &c.BotConf, nil
 }
