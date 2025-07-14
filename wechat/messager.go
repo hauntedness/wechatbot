@@ -3,7 +3,6 @@ package wechat
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/url"
 	"time"
 
@@ -83,7 +82,7 @@ func (m *messager) refreshToken() error {
 		return err
 	}
 	if token.Errcode != 0 {
-		return fmt.Errorf("error: %#v", token)
+		return &MsgError[Token]{v: token}
 	}
 	m.token = token
 	m.token.willExpireAt = time.Now().Add(time.Second * time.Duration(m.token.ExpiresIn-10))
@@ -134,7 +133,7 @@ func (m *messager) Send(messages string, articles []Article, ctx context.Context
 			return err
 		}
 		if res.Errcode != 0 {
-			return fmt.Errorf("error: %#v", res)
+			return &MsgError[MessageSendResponse]{v: res}
 		}
 		return nil
 	}
