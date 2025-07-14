@@ -2,7 +2,6 @@ package wechat
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -79,16 +78,12 @@ func (m *messager) refreshToken() error {
 		RawQuery:   value.Encode(),
 	}
 	url_ := u.String()
-
-	data, err := httputil.Get(url_, nil)
+	token, err := httputil.GetJson[Token](url_, nil, nil)
 	if err != nil {
 		return err
 	}
-	err = json.Unmarshal(data, m.token)
-	if err != nil {
-		return err
-	}
-	m.token.willExpireAt = time.Now().Add(time.Duration(m.token.ExpiresIn - 10))
+	m.token = token
+	m.token.willExpireAt = time.Now().Add(time.Second * time.Duration(m.token.ExpiresIn-10))
 	return nil
 }
 
