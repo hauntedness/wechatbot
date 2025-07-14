@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/url"
 	"time"
 
@@ -135,14 +136,24 @@ func (m *messager) Send(messages string, articles []Article, ctx context.Context
 			h = make(httputil.H)
 			h["User-Agent"] = m.config.UserAgent
 		}
-		res, err := httputil.Post(senderUrl, bytes.NewReader(json), h)
+		res, err := httputil.PostJson[MessageSendResponse](senderUrl, bytes.NewReader(json), h)
 		if err != nil {
 			return err
 		}
-		err = IsAccessTokenError(res)
-		if err != nil {
-			return err
+		if res.Errcode != 0 {
+			return fmt.Errorf("error: %#v", res)
 		}
 		return nil
 	}
+}
+
+type MessageSendResponse struct {
+	Errcode        int64  `json:"errcode"`
+	Errmsg         string `json:"errmsg"`
+	Invaliduser    string `json:"invaliduser"`
+	Invalidparty   string `json:"invalidparty"`
+	Invalidtag     string `json:"invalidtag"`
+	Unlicenseduser string `json:"unlicenseduser"`
+	Msgid          string `json:"msgid"`
+	ResponseCode   string `json:"response_code"`
 }
