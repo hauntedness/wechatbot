@@ -82,6 +82,9 @@ func (m *messager) refreshToken() error {
 	if err != nil {
 		return err
 	}
+	if token.Errcode != 0 {
+		return fmt.Errorf("error: %#v", token)
+	}
 	m.token = token
 	m.token.willExpireAt = time.Now().Add(time.Second * time.Duration(m.token.ExpiresIn-10))
 	return nil
