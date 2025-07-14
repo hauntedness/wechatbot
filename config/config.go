@@ -30,18 +30,16 @@ func GetWechatConfig() (*config, error) {
 }
 
 type BotConfig struct {
-	CorpId         string
-	Agent          string
-	Secret         string
-	UserAgent      string
-	Protocol       string
-	Host           string
-	Port           int
-	GetTokenUri    string
-	SendMsgUri     string
-	UserId         string
-	Token          string
-	EncodingAESKey string
+	CorpId      string
+	Agent       string
+	Secret      string
+	UserAgent   string
+	Protocol    string
+	Host        string
+	Port        int
+	GetTokenUri string
+	SendMsgUri  string
+	UserId      string
 }
 
 func GetBot() (*BotConfig, error) {

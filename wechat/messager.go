@@ -22,11 +22,11 @@ type messager struct {
 }
 
 type Message struct {
-	Touser  string `json:"touser"`
-	Toparty string `json:"toparty,omitempty"`
-	Totag   string `json:"totag,omitempty"`
-	Msgtype string `json:"msgtype"`
-	Agentid string `json:"agentid"`
+	ToUser  string `json:"touser"`
+	ToParty string `json:"toparty,omitempty"`
+	ToTag   string `json:"totag,omitempty"`
+	MsgType string `json:"msgtype"`
+	AgentId string `json:"agentid"`
 	News    News   `json:"news,omitempty"`
 	Text    struct {
 		Content string `json:"content"`
@@ -112,26 +112,30 @@ func (m *messager) Send(messages string, articles []Article, ctx context.Context
 		}
 		senderUrl := u.String()
 		message := Message{
-			Touser:  m.config.UserId,
-			Agentid: m.config.Agent,
+			ToUser:  m.config.UserId,
+			AgentId: m.config.Agent,
 		}
 		if len(articles) != 0 {
-			message.Msgtype = "news"
+			message.MsgType = "news"
 			message.News = News{
 				Articles: articles,
 			}
 		} else if messages != "" {
 			message.Text.Content = messages
-			message.Msgtype = "text"
+			message.MsgType = "text"
 		} else {
-			panic("can not send empty message")
+			return errors.New("can not send empty message")
 		}
 		json, err := json.Marshal(message)
 		if err != nil {
 			return err
 		}
-
-		res, err := httputil.Post(senderUrl, bytes.NewReader(json), nil)
+		var h httputil.H
+		if m.config.UserAgent != "" {
+			h = make(httputil.H)
+			h["User-Agent"] = m.config.UserAgent
+		}
+		res, err := httputil.Post(senderUrl, bytes.NewReader(json), h)
 		if err != nil {
 			return err
 		}
